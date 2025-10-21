@@ -22,7 +22,29 @@ class _SidebarState extends State<Sidebar> {
   }
 
   Future<void> _loadMenu() async {
-    final vaultDirectory = Directory("/Users/matt/Projects/blog_flutterbountyhunters_com/blog_content");
+    // Use a default directory that exists on most systems, or create a sample directory
+    final vaultDirectory = Directory("/tmp/obsidian_sample");
+    
+    // Create sample directory and files if they don't exist
+    if (!await vaultDirectory.exists()) {
+      await vaultDirectory.create(recursive: true);
+      
+      // Create some sample files
+      final sampleFiles = [
+        "Welcome.md",
+        "Getting Started.md", 
+        "Notes/Meeting Notes.md",
+        "Notes/Project Ideas.md",
+        "Archive/Old Notes.md"
+      ];
+      
+      for (final fileName in sampleFiles) {
+        final filePath = "${vaultDirectory.path}/$fileName";
+        final file = File(filePath);
+        await file.create(recursive: true);
+        await file.writeAsString("# ${basenameWithoutExtension(filePath)}\n\nThis is a sample document.");
+      }
+    }
 
     final lineItems = <LineItem>[];
     await for (final entity in vaultDirectory.list(recursive: true)) {

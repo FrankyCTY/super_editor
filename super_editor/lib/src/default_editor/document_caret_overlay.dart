@@ -9,6 +9,8 @@ import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart'
 import 'package:super_text_layout/super_text_layout.dart';
 
 /// Document overlay that paints a caret with the given [caretStyle].
+/// USERNOTE: CaretDocumentOverlay is just an overlay widget that ContentLayers inserts after the document has been laid out.
+/// CaretDocumentOverlay is one of the widgets that ends up in the _overlays list inside [ContentLayersElement], and the only reason it can safely ask “where is character 42?” is the layout-callback mechanism we saw earlier.
 class CaretDocumentOverlay extends DocumentLayoutLayerStatefulWidget {
   const CaretDocumentOverlay({
     Key? key,

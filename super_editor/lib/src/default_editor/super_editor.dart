@@ -735,6 +735,8 @@ class SuperEditorState extends State<SuperEditor> {
                   for (final overlayBuilder in plugin.documentOverlayBuilders) //
                     (context) => overlayBuilder.build(context, editContext),
                 // Add all overlays that the app wants.
+                // USERNOTE: This syntax is to create each item as a function that fits the expected type, which is a ContentLayerWidgetBuilder (typedef).
+                // USERNOTE: typedef ContentLayerWidgetBuilder = ContentLayerWidget Function(BuildContext);
                 for (final overlayBuilder in widget.documentOverlayBuilders) //
                   (context) => overlayBuilder.build(context, editContext),
               ],

@@ -93,6 +93,7 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
 class _DocumentScaffoldState extends State<DocumentScaffold> {
   @override
   Widget build(BuildContext context) {
+    // USERNOTE: wrapped around the whole ContentLayers so that every part of the document (content + underlays + overlays) can receive the same gesture events (taps, drags, long-presses, etc.).
     var child = _buildGestureSystem(
       child: _buildDocumentLayout(),
     );
@@ -134,7 +135,10 @@ class _DocumentScaffoldState extends State<DocumentScaffold> {
   }
 
   Widget _buildDocumentLayout() {
+    // USERNOTE: The content is wrapped by SingleColumnDocumentLayout s the only thing that decides the real geometry (width, height, scroll-extent, baseline, etc.).
+    // USERNOTE: See inside render object impl of the [ContentLayers] widget: [RenderContentLayers.performLayout()] on how this is guaranteed.
     return ContentLayers(
+      // USERNOTE: This is a "render-object widget" — the lowest-level, framework-facing kind — whose only job is to host a custom render object (RenderContentLayers) and a custom element (ContentLayersElement) so that Flutter will:
       content: (onBuildScheduled) => SingleColumnDocumentLayout(
         key: widget.documentLayoutKey,
         presenter: widget.presenter,

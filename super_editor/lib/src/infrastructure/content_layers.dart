@@ -25,6 +25,11 @@ import 'package:super_editor/src/infrastructure/sliver_hybrid_stack.dart';
 /// The layers are built after [content] is laid out, so that the layers can inspect the
 /// [content] layout during the layers' build phase. This makes it easy, for example, to
 /// position a caret on top of a document, using only the widget tree.
+/// USERNOTE: This is a "render-object widget" — the lowest-level, framework-facing kind — whose only job is to host a custom render object (RenderContentLayers) and a custom element (ContentLayersElement) so that Flutter will:
+/// 1. let one Element/RenderObject pair manage many child widgets/render-objects, and
+/// 2. run the layout-then-build timing we need (impossible with normal widgets).
+/// USERNOTE:
+/// Subclassing RenderObjectWidget (and supplying your own Element + RenderObject) is the only place in the public API where you get simultaneous control over all three trees:
 class ContentLayers extends RenderObjectWidget {
   const ContentLayers({
     super.key,
@@ -73,6 +78,18 @@ class ContentLayers extends RenderObjectWidget {
 /// `Element` for a [ContentLayers] widget.
 ///
 /// Must have a [renderObject] of type [RenderContentLayers].
+/// USERNOTE: A ContentLayersElement is the root of a little private sub-tree in both trees.
+/// -- ContentLayersElement --
+// ├─ Element (content widget)
+// ├─ List<Element> (underlay widgets)
+// └─ List<Element> (overlay widgets)
+///
+/// -- RenderContentLayers (render subtree) --
+// ├─ RenderSliver (content)
+// ├─ List<RenderBox> (underlays)
+// └─ List<RenderBox> (overlays)
+// USERNOTE: The framework still sees one official child slot from the outside, but inside this sub-tree the custom element/render-object pair inserts, moves, lays out and paints as many nodes as it wants, all governed by the rules you coded (performLayout, paint, hitTestChildren, etc.).
+// USERNOTE: We are managing a whole sub-tree, while pretending to be a single node to the rest of Flutter.
 class ContentLayersElement extends RenderObjectElement {
   /// The real Flutter framework `onBuildScheduled` callback.
   ///
@@ -609,6 +626,8 @@ class RenderContentLayers extends RenderSliver with RenderSliverHelpers {
     }
   }
 
+  // USERNOTE: Enforce guarantee: Layers are the same size as the content.
+
   @override
   void performLayout() {
     contentLayersLog.info("Laying out ContentLayers");
@@ -623,6 +642,7 @@ class RenderContentLayers extends RenderSliver with RenderSliverHelpers {
     // Always layout the content first, so that layers can inspect the content layout.
     contentLayersLog.fine("Laying out content - $_content");
     (_content!.parentData! as SliverLogicalParentData).layoutOffset = 0.0;
+    // USERNOTE: 1. content lays out first
     _content!.layout(constraints, parentUsesSize: true);
     contentLayersLog.fine("Content after layout: $_content");
 
@@ -634,6 +654,9 @@ class RenderContentLayers extends RenderSliver with RenderSliverHelpers {
       );
       return;
     }
+    // USERNOTE: Tell parent how much space I claim in the viewport.
+    // by writing that information into the geometry getter (a SliverGeometry object).
+    // Immediately after performLayout returns the viewport’s RenderViewportBase (or any other sliver host) reads that information and stores it.
     geometry = SliverGeometry(
       scrollExtent: sliverLayoutGeometry.scrollExtent,
       paintExtent: sliverLayoutGeometry.paintExtent,
@@ -655,13 +678,14 @@ class RenderContentLayers extends RenderSliver with RenderSliverHelpers {
       // Usually, widgets are built during the build phase, but we're building the layers
       // during layout phase, so we need to explicitly tell Flutter to build all elements.
       _element!.owner!.buildScope(_element!, () {
-        _element!.buildLayers();
+        _element!.buildLayers(); // USERNOTE: <— builds widget tree for every layer
       });
     });
     contentLayersLog.finer("Done building layers");
 
     contentLayersLog.fine("Laying out layers (${_underlays.length} underlays, ${_overlays.length} overlays)");
     // Layout the layers below and above the content.
+    // USERNOTE: 2. layers are forced to the *same* viewport width and the *same* scroll height
     final layerConstraints = ScrollingBoxConstraints(
       minWidth: constraints.crossAxisExtent,
       maxWidth: constraints.crossAxisExtent,
@@ -670,6 +694,7 @@ class RenderContentLayers extends RenderSliver with RenderSliverHelpers {
       scrollOffset: constraints.scrollOffset,
     );
 
+    // USERNOTE: 3. every underlay/overlay receives those identical constraints
     for (final underlay in _underlays) {
       final childParentData = underlay.parentData! as SliverLogicalParentData;
       childParentData.layoutOffset = -constraints.scrollOffset;
@@ -729,6 +754,7 @@ class RenderContentLayers extends RenderSliver with RenderSliverHelpers {
     return false;
   }
 
+  // USERNOTE: Guarantee: Everything paints in the correct order (under → content → over)
   @override
   void paint(PaintingContext context, Offset offset) {
     if (_content == null) {
@@ -841,6 +867,15 @@ typedef ContentLayerWidgetBuilder = ContentLayerWidget Function(BuildContext con
 /// [ContentLayerProxyWidget] with the desired subtree. This approach is a
 /// quicker and more convenient alternative to [ContentLayerStatelessWidget]
 /// for the simplest of layer trees.
+// USERNOTE: Flutter builds children in top-down order; a normal widget that tries to inspect its sibling content layout will crash because the sibling has not been laid out yet.
+// ContentLayers therefore keeps two separate element trees:
+//
+// -- ContentLayers --
+// ├─ content (the document)
+// └─ layers (overlays)
+//
+// and waits until the content is laid out before it lets the layers query it.
+// Only widgets that promise to play by those rules (by implementing ContentLayerWidget) are allowed into the layers tree.
 abstract class ContentLayerWidget implements Widget {
   // Marker interface.
 }
@@ -957,6 +992,7 @@ extension on Element {
     ContentLayersElement? contentLayersElement;
 
     visitAncestorElements((element) {
+      // USERNOTE: Guarantee at compile time as we know we are looking for a ContentLayersElement in the element tree.
       if (element is ContentLayersElement) {
         contentLayersElement = element;
         return false;
@@ -996,10 +1032,17 @@ abstract class ContentLayerState<WidgetType extends ContentLayerStatefulWidget, 
   /// in subclasses.
   @override
   Widget build(BuildContext context) {
+    /// USERNOTE: Finds and returns a [ContentLayersElement] by walking up the [Element] tree,
+    /// beginning with this [Element].
+    /// USERNOTE: Build context is a facade, and it is an element. We cast it as element so we can access our element extensions. 'findAncestorContentLayers'.
     final contentLayers = (context as Element).findAncestorContentLayers();
     final contentElement = contentLayers?._content;
+    // USERNOTE: Every Element knows the single RenderObject it is currently attached to.
+    // After we have the ContentLayersElement we immediately ask it for its render object:
     final contentLayout = contentElement?.findRenderObject();
 
+    // USERNOTE:  Ensure the contentLayers up the tree are laid out before we try to compute layout data.
+    // USERNOTE: Internally the getter 'renderObject' cast the render object as 'RenderContentLayers'. This is a custom render object that we have defined, and it contains custom logic such as to determine if the content needs layout e.g.
     if (contentLayers != null && !contentLayers.renderObject.contentNeedsLayout) {
       _layoutData = computeLayoutData(contentElement, contentLayout);
     }
