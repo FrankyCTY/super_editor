@@ -29,7 +29,38 @@ class _TabbedEditorState extends State<TabbedEditor> {
         ),
         onAddTabPressed: () {},
       ),
-      content: const SizedBox(),
+      content: Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Document: Tab Editor',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'This is where the document content would be displayed.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white70,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'You can add your Super Editor widget here to display the actual document content.',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white54,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
