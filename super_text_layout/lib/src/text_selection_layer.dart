@@ -27,6 +27,7 @@ class TextLayoutSelectionHighlight extends StatelessWidget {
         textLayout: textLayout,
         selectionColor: style.color,
         borderRadius: style.borderRadius,
+        boxHeightStyle: style.boxHeightStyle,
         textSelection: selection,
       ),
     );
@@ -116,18 +117,22 @@ class SelectionHighlightStyle {
   const SelectionHighlightStyle({
     this.color = const Color(0xFFACCEF7),
     this.borderRadius = BorderRadius.zero,
+    this.boxHeightStyle = BoxHeightStyle.includeLineSpacingMiddle,
   });
 
   final Color color;
   final BorderRadius borderRadius;
+  final BoxHeightStyle boxHeightStyle;
 
   SelectionHighlightStyle copyWith({
     Color? color,
     BorderRadius? borderRadius,
+    BoxHeightStyle? boxHeightStyle,
   }) {
     return SelectionHighlightStyle(
       color: color ?? this.color,
       borderRadius: borderRadius ?? this.borderRadius,
+      boxHeightStyle: boxHeightStyle ?? this.boxHeightStyle,
     );
   }
 }
@@ -142,6 +147,7 @@ class TextSelectionPainter extends CustomPainter {
     required this.textLayout,
     required this.textSelection,
     this.borderRadius = BorderRadius.zero,
+    this.boxHeightStyle = BoxHeightStyle.includeLineSpacingMiddle,
     required this.selectionColor,
   }) : _selectionPaint = Paint()..color = selectionColor;
 
@@ -149,6 +155,7 @@ class TextSelectionPainter extends CustomPainter {
   final TextSelection? textSelection;
   final Color selectionColor;
   final BorderRadius borderRadius;
+  final BoxHeightStyle boxHeightStyle;
   final Paint _selectionPaint;
 
   @override
@@ -164,7 +171,7 @@ class TextSelectionPainter extends CustomPainter {
 
     final selectionBoxes = textLayout!.getBoxesForSelection(
       textSelection!,
-      boxHeightStyle: BoxHeightStyle.max,
+      boxHeightStyle: boxHeightStyle,
     );
 
     for (final box in selectionBoxes) {
@@ -196,7 +203,8 @@ class TextSelectionPainter extends CustomPainter {
   bool shouldRepaint(TextSelectionPainter oldDelegate) {
     return textLayout != oldDelegate.textLayout ||
         textSelection != oldDelegate.textSelection ||
-        selectionColor != oldDelegate.selectionColor;
+        selectionColor != oldDelegate.selectionColor ||
+        boxHeightStyle != oldDelegate.boxHeightStyle;
   }
 }
 

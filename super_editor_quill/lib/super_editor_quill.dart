@@ -3,9 +3,12 @@ library super_editor_quill;
 export 'src/parsing/block_formats.dart';
 export 'src/parsing/inline_formats.dart';
 export 'src/parsing/parser.dart';
+export 'src/parsing/callout_formats.dart';
 
 export 'src/serializing/serializing.dart';
 export 'src/serializing/serializers.dart';
+export 'src/serializing/callout_serializers.dart';
 
 export 'src/content/formatting.dart';
 export 'src/content/multimedia.dart';
+export 'src/content/callout.dart';

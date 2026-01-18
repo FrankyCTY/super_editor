@@ -2,6 +2,7 @@ import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_quill/src/parsing/block_formats.dart';
 import 'package:super_editor_quill/src/parsing/inline_formats.dart';
+import 'package:super_editor_quill/src/parsing/callout_formats.dart';
 
 /// Parses a fully formed Quill Delta document (as JSON) into a [MutableDocument].
 ///
@@ -173,6 +174,7 @@ const defaultBlockFormats = [
   ListDeltaFormat(),
   AlignDeltaFormat(),
   IndentParagraphDeltaFormat(),
+  CalloutDeltaFormat(),
 ];
 
 /// The standard inline text formats that are parsed from Quill Deltas, e.g.,
@@ -201,6 +203,7 @@ const defaultEmbedBockFormats = [
   VideoEmbedBlockDeltaFormat(),
   AudioEmbedBlockDeltaFormat(),
   FileEmbedBlockDeltaFormat(),
+  CalloutEmbedBlockDeltaFormat(),
 ];
 
 /// An extension on Quill Delta [Operation]s that adds the ability for an operation to

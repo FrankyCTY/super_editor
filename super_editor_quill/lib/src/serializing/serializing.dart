@@ -1,6 +1,7 @@
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_quill/src/serializing/serializers.dart';
+import 'package:super_editor_quill/src/serializing/callout_serializers.dart';
 
 /// Extensions on [MutableDocument] for serializing a [MutableDocument]
 /// to a Quill Delta document.
@@ -55,4 +56,5 @@ const defaultDeltaSerializers = [
   videoDeltaSerializer,
   audioDeltaSerializer,
   fileDeltaSerializer,
+  calloutDeltaSerializer,
 ];

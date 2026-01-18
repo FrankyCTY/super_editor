@@ -242,7 +242,10 @@ class _MarkdownToDocument implements md.NodeVisitor {
         if (element.attributes['class'] == 'task-list-item') {
           // We handle task deserialization using the built-in `UnorderedListWithCheckboxSyntax`. It's parsed
           // as a list item with a checkbox input element.
-          _addTask(element);
+          _addTask(
+            element,
+            indent: _listItemTypeStack.length - 1,
+          );
 
           // Skip any child elements because we already added the task node.
           return false;
@@ -432,7 +435,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
     );
   }
 
-  void _addTask(md.Element element) {
+  void _addTask(md.Element element, {required int indent}) {
     bool checked = false;
     if (element.children != null && //
         element.children!.isNotEmpty &&
@@ -446,6 +449,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
         id: Editor.createNodeId(),
         text: _parseInlineText(element.textContent),
         isComplete: checked,
+        indent: indent,
       ),
     );
   }

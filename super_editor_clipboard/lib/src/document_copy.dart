@@ -2,6 +2,8 @@ import 'package:super_clipboard/super_clipboard.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
 
+// TODO: Selection -> clipboard
+// FIXME: When/where do we invoke this method?
 extension RichTextCopy on Document {
   Future<void> copyAsRichTextWithPlainTextFallback({
     DocumentSelection? selection,
@@ -13,6 +15,7 @@ extension RichTextCopy on Document {
 
     final item = DataWriterItem();
 
+    // FIXME: This added 2 formats as a fallback chain to fall back to plain text. How does it knwo when to fallback?
     // Serialize to HTML as the most common representation of rich text
     // across apps.
     item.add(Formats.htmlText(toHtml(
@@ -60,12 +63,18 @@ extension RichTextCopy on Document {
 /// A global configuration for rich text serializers, which can be globally customized
 /// within an app to add or change the serializers used by [Document.copyAsRichText].
 abstract class SuperEditorClipboardConfig {
-  static NodeHtmlSerializerChain get nodeHtmlSerializers => _nodeHtmlSerializers;
-  static NodeHtmlSerializerChain _nodeHtmlSerializers = defaultNodeHtmlSerializerChain;
-  static void setNodeHtmlSerializers(NodeHtmlSerializerChain nodeSerializers) => _nodeHtmlSerializers = nodeSerializers;
+  static NodeHtmlSerializerChain get nodeHtmlSerializers =>
+      _nodeHtmlSerializers;
+  static NodeHtmlSerializerChain _nodeHtmlSerializers =
+      defaultNodeHtmlSerializerChain;
+  static void setNodeHtmlSerializers(NodeHtmlSerializerChain nodeSerializers) =>
+      _nodeHtmlSerializers = nodeSerializers;
 
-  static InlineHtmlSerializerChain get inlineHtmlSerializers => _inlineHtmlSerializers;
-  static InlineHtmlSerializerChain _inlineHtmlSerializers = defaultInlineHtmlSerializers;
-  static void setInlineHtmlSerializers(InlineHtmlSerializerChain inlineSerializers) =>
+  static InlineHtmlSerializerChain get inlineHtmlSerializers =>
+      _inlineHtmlSerializers;
+  static InlineHtmlSerializerChain _inlineHtmlSerializers =
+      defaultInlineHtmlSerializers;
+  static void setInlineHtmlSerializers(
+          InlineHtmlSerializerChain inlineSerializers) =>
       _inlineHtmlSerializers = inlineSerializers;
 }
